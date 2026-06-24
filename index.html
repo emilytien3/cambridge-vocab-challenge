@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>劍橋英檢 562 單字大挑戰 🎮</title>
+    <title>劍橋英檢單字大挑戰 🎮</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SheetJS for Excel/CSV parsing and exporting -->
@@ -72,23 +72,56 @@
 </head>
 <body class="min-h-screen text-gray-800 py-8 px-4 font-sans antialiased flex flex-col items-center">
 
-    <!-- Screen 1: Upload Area -->
+    <!-- Screen 1: Upload / Select Area -->
     <div id="upload-screen" class="w-full max-w-3xl flex flex-col items-center mt-10 transition-all duration-500">
-        <h1 class="text-4xl md:text-5xl font-black text-blue-600 mb-4 text-center drop-shadow-md">
+        <h1 class="text-4xl md:text-5xl font-black text-blue-600 mb-8 text-center drop-shadow-md">
             🌟 劍橋英檢單字大挑戰 🌟
         </h1>
-        <p class="text-lg text-gray-600 mb-8 text-center font-bold">請將含有單字的 Excel 或 CSV 檔案拖曳到下方框框中喔！</p>
         
-        <div id="drop-zone" class="w-full h-80 border-4 border-dashed border-blue-300 rounded-3xl bg-white shadow-xl flex flex-col items-center justify-center p-8 text-center cursor-pointer transition-all duration-300 hover:border-blue-500 hover:bg-blue-50 relative overflow-hidden">
-            <i class="fa-solid fa-cloud-arrow-up text-7xl text-blue-400 mb-4"></i>
-            <h2 class="text-2xl font-bold text-gray-700 mb-2">拖曳檔案到這裡</h2>
-            <p class="text-gray-500">或者點擊選擇檔案</p>
-            <p class="text-sm text-gray-400 mt-4 bg-gray-100 px-4 py-2 rounded-full">
-                需要欄位：級別、英文單字、詞性、繁體中文意思
-            </p>
+        <!-- 新增：內建題庫選擇區 -->
+        <div class="w-full bg-white p-6 md:p-8 rounded-3xl shadow-xl border-b-8 border-indigo-300 mb-8 flex flex-col items-center relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl shadow-sm">推薦方式</div>
+            <h2 class="text-2xl font-black text-indigo-600 mb-4"><i class="fa-solid fa-list-check"></i> 快速選擇題庫</h2>
+            <p class="text-gray-500 mb-4 font-bold text-center">請直接從清單中選擇今天要挑戰的進度！</p>
+            
+            <div class="flex flex-col md:flex-row w-full max-w-xl gap-3">
+                <select id="preset-selector" class="flex-1 p-4 border-4 border-indigo-100 rounded-2xl font-bold text-gray-700 text-lg focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all shadow-inner cursor-pointer">
+                    <option value="">-- 請選擇要挑戰的題庫 --</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表1-50.xlsx">📗 Part 1：第 1 - 50 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表51-100.xlsx">📗 Part 2：第 51 - 100 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表101-150.xlsx">📗 Part 3：第 101 - 150 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表151-200.xlsx">📗 Part 4：第 151 - 200 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表201-250.xlsx">📗 Part 5：第 201 - 250 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表251-300.xlsx">📗 Part 6：第 251 - 300 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表301-350.xlsx">📗 Part 7：第 301 - 350 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表351-400.xlsx">📗 Part 8：第 351 - 400 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表401-450.xlsx">📗 Part 9：第 401 - 450 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表451-500.xlsx">📗 Part 10：第 451 - 500 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表501-550.xlsx">📗 Part 11：第 501 - 550 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表551-573.xlsx">📗 Part 12：第 551 - 573 題</option>
+                </select>
+                <button id="btn-load-preset" class="bg-indigo-500 hover:bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xl transition-all shadow-md border-b-4 border-indigo-700 bounce-hover whitespace-nowrap flex items-center justify-center gap-2">
+                    出發！🚀
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center w-full max-w-xl mb-8">
+            <div class="flex-grow border-t-2 border-gray-300 border-dashed"></div>
+            <span class="px-4 text-gray-400 font-bold">或者，您也可以</span>
+            <div class="flex-grow border-t-2 border-gray-300 border-dashed"></div>
+        </div>
+
+        <!-- 原有：拖曳區 (保留作為備用方案) -->
+        <div id="drop-zone" class="w-full max-w-xl h-48 border-4 border-dashed border-blue-200 rounded-3xl bg-white/60 shadow-md flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-300 hover:border-blue-400 hover:bg-blue-50 relative overflow-hidden">
+            <i class="fa-solid fa-cloud-arrow-up text-4xl text-blue-300 mb-2"></i>
+            <h2 class="text-xl font-bold text-gray-600 mb-1">手動拖曳其他檔案</h2>
+            <p class="text-sm text-gray-400">將檔案拖到此處</p>
             <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".xlsx, .xls, .csv">
         </div>
-        <div id="upload-error" class="text-red-500 font-bold mt-4 hidden text-lg">⚠️ 檔案讀取失敗，請確認格式正確。</div>
+        
+        <!-- 統一的錯誤提示區 -->
+        <div id="upload-error" class="text-red-500 font-bold mt-6 hidden text-lg text-center bg-red-50 p-4 rounded-xl border-2 border-red-200 w-full max-w-xl">⚠️ 檔案讀取失敗。</div>
     </div>
 
     <!-- Screen 2: Game Area -->
@@ -171,7 +204,7 @@
             
             <div class="flex flex-col md:flex-row justify-center gap-4 mb-8">
                 <button onclick="location.reload()" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xl transition-all shadow-lg border-b-4 border-blue-700 bounce-hover">
-                    <i class="fa-solid fa-rotate-right"></i> 再玩一次
+                    <i class="fa-solid fa-rotate-right"></i> 回首頁選題庫
                 </button>
                 <button id="btn-download-record" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black text-xl transition-all shadow-lg border-b-4 border-emerald-700 bounce-hover">
                     <i class="fa-solid fa-file-excel"></i> 下載錯題紀錄
@@ -192,10 +225,10 @@
         // --- State Management ---
         let vocabList = [];
         let userAnswers = [];
-        let mistakeRecords = []; // 專門用來記錄錯題以供匯出
-        let finalCalculatedScore = 0; // 儲存最後算出的分數
+        let mistakeRecords = []; 
+        let finalCalculatedScore = 0; 
         let currentIndex = 0;
-        let currentFileName = ''; // 新增：用來記錄當前測驗的檔案名稱
+        let currentFileName = ''; 
         
         let speechSynth = window.speechSynthesis;
         let engVoice = null;
@@ -209,6 +242,9 @@
         };
         
         const ui = {
+            presetSelector: document.getElementById('preset-selector'), // 新增：下拉選單
+            btnLoadPreset: document.getElementById('btn-load-preset'),  // 新增：載入按鈕
+            
             dropZone: document.getElementById('drop-zone'),
             fileInput: document.getElementById('file-input'),
             uploadError: document.getElementById('upload-error'),
@@ -225,7 +261,7 @@
             btnPrev: document.getElementById('btn-prev'),
             btnNext: document.getElementById('btn-next'),
             btnSubmit: document.getElementById('btn-submit'),
-            btnDownloadRecord: document.getElementById('btn-download-record'), // 新增匯出按鈕
+            btnDownloadRecord: document.getElementById('btn-download-record'),
             submitWarning: document.getElementById('submit-warning'),
             
             gridContainer: document.getElementById('grid-container'),
@@ -247,7 +283,10 @@
             }
             loadVoices();
 
-            // Drag and Drop Events
+            // 新增：網路請求載入題庫按鈕事件
+            ui.btnLoadPreset.addEventListener('click', loadBuiltInFile);
+
+            // 原有：Drag and Drop Events (作為備用方案保留)
             ui.dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 ui.dropZone.classList.add('upload-zone-active');
@@ -259,12 +298,12 @@
                 e.preventDefault();
                 ui.dropZone.classList.remove('upload-zone-active');
                 if (e.dataTransfer.files.length > 0) {
-                    processFile(e.dataTransfer.files[0]);
+                    processLocalFile(e.dataTransfer.files[0]);
                 }
             });
             ui.fileInput.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
-                    processFile(e.target.files[0]);
+                    processLocalFile(e.target.files[0]);
                 }
             });
 
@@ -285,12 +324,54 @@
             });
 
             ui.btnSubmit.addEventListener('click', calculateResult);
-            ui.btnDownloadRecord.addEventListener('click', exportRecordToExcel); // 綁定匯出事件
+            ui.btnDownloadRecord.addEventListener('click', exportRecordToExcel); 
         }
 
-        // --- File Processing (Excel/CSV) ---
-        function processFile(file) {
-            currentFileName = file.name; // 記錄上傳的題庫檔案名稱
+        // --- Fetch Predefined File (GitHub Pages 等環境適用) ---
+        async function loadBuiltInFile() {
+            const fileName = ui.presetSelector.value;
+            if (!fileName) {
+                ui.uploadError.innerHTML = "⚠️ 請先從下拉選單中選擇一個題庫喔！";
+                ui.uploadError.classList.remove('hidden');
+                return;
+            }
+            
+            // 按鈕狀態：讀取中
+            ui.btnLoadPreset.disabled = true;
+            ui.btnLoadPreset.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 讀取中...';
+            ui.uploadError.classList.add('hidden');
+
+            try {
+                // 透過網路請求抓取同一層資料夾底下的 Excel 檔案
+                const response = await fetch(fileName);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                const workbook = XLSX.read(data, {type: 'array'});
+                
+                currentFileName = fileName; // 記錄檔名供匯出使用
+                
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const rawJson = XLSX.utils.sheet_to_json(worksheet);
+                
+                parseVocabData(rawJson);
+                
+            } catch (error) {
+                console.error("Fetch error:", error);
+                ui.uploadError.innerHTML = `⚠️ 無法讀取題庫檔案 <b>${fileName}</b>。<br>請確認該 Excel 檔案有正確上傳到 GitHub，並且與這份 HTML 網頁放在「同一個資料夾」下！`;
+                ui.uploadError.classList.remove('hidden');
+            } finally {
+                // 恢復按鈕狀態
+                ui.btnLoadPreset.disabled = false;
+                ui.btnLoadPreset.innerHTML = '出發！🚀';
+            }
+        }
+
+        // --- Local File Processing (原有手動上傳功能，改名以區別) ---
+        function processLocalFile(file) {
+            currentFileName = file.name; 
             const reader = new FileReader();
             ui.uploadError.classList.add('hidden');
             
@@ -305,11 +386,13 @@
                     parseVocabData(rawJson);
                 } catch (error) {
                     console.error("Parse error:", error);
+                    ui.uploadError.innerHTML = "⚠️ 檔案解析失敗，請確認格式正確。";
                     ui.uploadError.classList.remove('hidden');
                 }
             };
             
             reader.onerror = () => {
+                ui.uploadError.innerHTML = "⚠️ 檔案讀取失敗。";
                 ui.uploadError.classList.remove('hidden');
             };
             
@@ -360,7 +443,7 @@
             }).filter(item => item.word && item.meaning);
 
             if (vocabList.length === 0) {
-                ui.uploadError.innerText = "⚠️ 找不到單字資料！請確保欄位名稱包含：級別、英文單字、詞性、繁體中文意思。";
+                ui.uploadError.innerHTML = "⚠️ 找不到單字資料！請確保欄位名稱包含：級別、英文單字、詞性、繁體中文意思。";
                 ui.uploadError.classList.remove('hidden');
                 return;
             }
@@ -450,7 +533,7 @@
             
             let cleanWord = word.split('/')[0].replace(/\((UK|US)\)/gi, '').replace(/[\(\)]/g, '').trim();
 
-            cleanWord = ". . . . " + cleanWord;
+            // cleanWord = ". . . . " + cleanWord;
 
             let utterance = new SpeechSynthesisUtterance(cleanWord);
             utterance.lang = 'en-US';
@@ -591,7 +674,7 @@
             // 建立 Excel 工作表的資料結構 (二維陣列)
             let wsData = [
                 ["測驗紀錄單"],
-                ["測驗題庫", currentFileName], // 新增：顯示這份測驗來自哪個檔案
+                ["測驗題庫", currentFileName], 
                 ["測驗日期", `${dateStr} ${timeStr}`],
                 ["測驗分數", `${finalCalculatedScore} / 100`],
                 [], // 空一行分隔

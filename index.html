@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>劍橋英檢 562 單字大挑戰 🎮</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS for Excel/CSV parsing and exporting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- FontAwesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts for kid-friendly typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            light: '#FFFBEB',
+                            yellow: '#FCD34D',
+                            orange: '#F97316',
+                            blue: '#3B82F6',
+                            green: '#10B981',
+                            red: '#EF4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #E0F2FE;
+            background-image: radial-gradient(#bae6fd 2px, transparent 2px);
+            background-size: 30px 30px;
+        }
+        
+        .bounce-hover:hover {
+            transform: translateY(-5px);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Custom Scrollbar for the grid */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .upload-zone-active {
+            border-color: #3B82F6 !important;
+            background-color: #EFF6FF !important;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-800 py-8 px-4 font-sans antialiased flex flex-col items-center">
+
+    <!-- Screen 1: Upload Area -->
+    <div id="upload-screen" class="w-full max-w-3xl flex flex-col items-center mt-10 transition-all duration-500">
+        <h1 class="text-4xl md:text-5xl font-black text-blue-600 mb-4 text-center drop-shadow-md">
+            🌟 劍橋英檢單字大挑戰 🌟
+        </h1>
+        <p class="text-lg text-gray-600 mb-8 text-center font-bold">請將含有單字的 Excel 或 CSV 檔案拖曳到下方框框中喔！</p>
+        
+        <div id="drop-zone" class="w-full h-80 border-4 border-dashed border-blue-300 rounded-3xl bg-white shadow-xl flex flex-col items-center justify-center p-8 text-center cursor-pointer transition-all duration-300 hover:border-blue-500 hover:bg-blue-50 relative overflow-hidden">
+            <i class="fa-solid fa-cloud-arrow-up text-7xl text-blue-400 mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-700 mb-2">拖曳檔案到這裡</h2>
+            <p class="text-gray-500">或者點擊選擇檔案</p>
+            <p class="text-sm text-gray-400 mt-4 bg-gray-100 px-4 py-2 rounded-full">
+                需要欄位：級別、英文單字、詞性、繁體中文意思
+            </p>
+            <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".xlsx, .xls, .csv">
+        </div>
+        <div id="upload-error" class="text-red-500 font-bold mt-4 hidden text-lg">⚠️ 檔案讀取失敗，請確認格式正確。</div>
+    </div>
+
+    <!-- Screen 2: Game Area -->
+    <div id="game-screen" class="w-full max-w-6xl hidden flex-col md:flex-row gap-6 transition-all duration-500">
+        
+        <!-- Left: Question Section -->
+        <div class="flex-1 flex flex-col gap-4">
+            <div class="bg-white p-6 rounded-3xl shadow-lg border-b-8 border-blue-200">
+                <div class="flex justify-between items-center mb-6">
+                    <span id="q-level" class="bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full font-black text-sm md:text-base uppercase tracking-wider shadow-sm">
+                        Starters
+                    </span>
+                    <span class="text-gray-500 font-bold text-lg">
+                        題目 <span id="q-current-num" class="text-blue-600 font-black text-xl">1</span> / <span id="q-total-num">100</span>
+                    </span>
+                </div>
+                
+                <div class="text-center my-10">
+                    <div id="q-pos" class="text-lg text-gray-500 font-bold mb-2">[ n. ]</div>
+                    
+                    <div id="q-region" class="hidden text-sm bg-indigo-100 text-indigo-700 font-bold px-4 py-1 rounded-full mb-4 inline-block shadow-sm border border-indigo-200">💡 提示：美式拼寫</div>
+
+                    <div class="flex justify-center items-center gap-4 mb-8">
+                        <div id="q-meaning" class="text-4xl md:text-5xl font-black text-gray-800 leading-tight">
+                            蘋果
+                        </div>
+                        <button id="btn-speak" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-full flex shrink-0 items-center justify-center transition-colors shadow-sm bounce-hover" title="聽發音">
+                            <i class="fa-solid fa-volume-high text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="max-w-md mx-auto">
+                        <input type="text" id="answer-input" autocomplete="off" placeholder="請輸入英文單字..." 
+                            class="w-full text-center text-3xl font-bold p-4 border-4 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all text-blue-700 placeholder-gray-300 shadow-inner">
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-8">
+                    <button id="btn-prev" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-xl font-bold transition-colors bounce-hover shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> 上一題
+                    </button>
+                    <button id="btn-next" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition-colors bounce-hover shadow-md border-b-4 border-blue-700 flex items-center gap-2">
+                        下一題 <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Submit Button Area -->
+            <div class="bg-white p-4 rounded-3xl shadow-lg text-center mt-auto border-b-8 border-green-200">
+                <p id="submit-warning" class="text-orange-500 font-bold mb-2">請完成所有題目後再交卷喔！</p>
+                <button id="btn-submit" disabled class="w-full bg-gray-300 text-gray-500 px-8 py-4 rounded-2xl font-black text-2xl transition-all duration-300 cursor-not-allowed">
+                    🚀 交卷看成績！
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Grid Section -->
+        <div class="w-full md:w-80 bg-white p-6 rounded-3xl shadow-lg border-b-8 border-purple-200 flex flex-col h-[70vh] md:h-auto">
+            <h3 class="text-xl font-black text-purple-600 mb-4 text-center border-b-2 border-purple-100 pb-2">
+                <i class="fa-solid fa-table-cells"></i> 題目導覽
+            </h3>
+            <div id="grid-container" class="grid grid-cols-5 gap-2 overflow-y-auto custom-scrollbar p-2 flex-1 items-start content-start">
+                <!-- Grid buttons generated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Result Area -->
+    <div id="result-screen" class="w-full max-w-4xl hidden flex-col items-center mt-4 transition-all duration-500">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full border-t-8 border-green-400 text-center relative overflow-hidden">
+            <!-- Confetti decoration (CSS pseudo) -->
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-400 via-yellow-400 to-blue-400"></div>
+            
+            <h2 class="text-4xl font-black text-gray-800 mb-2 mt-4">測驗完成！🎉</h2>
+            <div class="text-7xl font-black my-6">
+                <span id="score-text" class="text-green-500">100</span>
+                <span class="text-3xl text-gray-400">/ 100</span>
+            </div>
+            <p id="score-comment" class="text-2xl font-bold text-orange-500 mb-8">太棒了！你是單字大師！</p>
+            
+            <div class="flex flex-col md:flex-row justify-center gap-4 mb-8">
+                <button onclick="location.reload()" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xl transition-all shadow-lg border-b-4 border-blue-700 bounce-hover">
+                    <i class="fa-solid fa-rotate-right"></i> 再玩一次
+                </button>
+                <button id="btn-download-record" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black text-xl transition-all shadow-lg border-b-4 border-emerald-700 bounce-hover">
+                    <i class="fa-solid fa-file-excel"></i> 下載錯題紀錄
+                </button>
+            </div>
+
+            <div class="text-left mt-8">
+                <h3 class="text-2xl font-black text-gray-700 mb-4 border-b-2 border-gray-100 pb-2">錯題訂正區 📝</h3>
+                <div id="mistakes-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto custom-scrollbar p-2">
+                    <!-- Mistakes generated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- State Management ---
+        let vocabList = [];
+        let userAnswers = [];
+        let mistakeRecords = []; // 專門用來記錄錯題以供匯出
+        let finalCalculatedScore = 0; // 儲存最後算出的分數
+        let currentIndex = 0;
+        let currentFileName = ''; // 新增：用來記錄當前測驗的檔案名稱
+        
+        let speechSynth = window.speechSynthesis;
+        let engVoice = null;
+        window.speechUtterances = [];
+
+        // --- DOM Elements ---
+        const screens = {
+            upload: document.getElementById('upload-screen'),
+            game: document.getElementById('game-screen'),
+            result: document.getElementById('result-screen')
+        };
+        
+        const ui = {
+            dropZone: document.getElementById('drop-zone'),
+            fileInput: document.getElementById('file-input'),
+            uploadError: document.getElementById('upload-error'),
+            
+            qLevel: document.getElementById('q-level'),
+            qNum: document.getElementById('q-current-num'),
+            qTotalNum: document.getElementById('q-total-num'),
+            qPos: document.getElementById('q-pos'),
+            qRegion: document.getElementById('q-region'),
+            qMeaning: document.getElementById('q-meaning'),
+            answerInput: document.getElementById('answer-input'),
+            
+            btnSpeak: document.getElementById('btn-speak'),
+            btnPrev: document.getElementById('btn-prev'),
+            btnNext: document.getElementById('btn-next'),
+            btnSubmit: document.getElementById('btn-submit'),
+            btnDownloadRecord: document.getElementById('btn-download-record'), // 新增匯出按鈕
+            submitWarning: document.getElementById('submit-warning'),
+            
+            gridContainer: document.getElementById('grid-container'),
+            mistakesContainer: document.getElementById('mistakes-container'),
+            scoreText: document.getElementById('score-text'),
+            scoreComment: document.getElementById('score-comment')
+        };
+
+        // --- Event Listeners Setup ---
+        function initApp() {
+            const loadVoices = () => {
+                const voices = speechSynth.getVoices();
+                engVoice = voices.find(v => v.lang === 'en-US' || v.lang === 'en_US') || 
+                           voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en_GB')) || 
+                           voices.find(v => v.lang.startsWith('en'));
+            };
+            if (speechSynth.onvoiceschanged !== undefined) {
+                speechSynth.onvoiceschanged = loadVoices;
+            }
+            loadVoices();
+
+            // Drag and Drop Events
+            ui.dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                ui.dropZone.classList.add('upload-zone-active');
+            });
+            ui.dropZone.addEventListener('dragleave', () => {
+                ui.dropZone.classList.remove('upload-zone-active');
+            });
+            ui.dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                ui.dropZone.classList.remove('upload-zone-active');
+                if (e.dataTransfer.files.length > 0) {
+                    processFile(e.dataTransfer.files[0]);
+                }
+            });
+            ui.fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    processFile(e.target.files[0]);
+                }
+            });
+
+            // Game Controls
+            ui.btnNext.addEventListener('click', () => changeQuestion(1));
+            ui.btnPrev.addEventListener('click', () => changeQuestion(-1));
+            ui.btnSpeak.addEventListener('click', () => speakWord(vocabList[currentIndex].word));
+            
+            ui.answerInput.addEventListener('input', (e) => {
+                userAnswers[currentIndex] = e.target.value;
+                updateGridItemColor(currentIndex);
+                checkCompleteness();
+            });
+            ui.answerInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    changeQuestion(1);
+                }
+            });
+
+            ui.btnSubmit.addEventListener('click', calculateResult);
+            ui.btnDownloadRecord.addEventListener('click', exportRecordToExcel); // 綁定匯出事件
+        }
+
+        // --- File Processing (Excel/CSV) ---
+        function processFile(file) {
+            currentFileName = file.name; // 記錄上傳的題庫檔案名稱
+            const reader = new FileReader();
+            ui.uploadError.classList.add('hidden');
+            
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const rawJson = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    parseVocabData(rawJson);
+                } catch (error) {
+                    console.error("Parse error:", error);
+                    ui.uploadError.classList.remove('hidden');
+                }
+            };
+            
+            reader.onerror = () => {
+                ui.uploadError.classList.remove('hidden');
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function generateAcceptedAnswers(rawWord) {
+            let cleanedWord = rawWord.replace(/\((UK|US)\)/gi, '').trim();
+            let parts = cleanedWord.split('/').map(p => p.trim());
+            let accepted = [];
+
+            parts.forEach(part => {
+                if (part.includes('(')) {
+                    let withoutParentheses = part.replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+                    let withParentheses = part.replace(/[\(\)]/g, '').replace(/\s+/g, ' ').trim();
+
+                    if (withoutParentheses) accepted.push(withoutParentheses.toLowerCase());
+                    if (withParentheses) accepted.push(withParentheses.toLowerCase());
+                } else {
+                    if (part) accepted.push(part.toLowerCase().replace(/\s+/g, ' '));
+                }
+            });
+
+            return [...new Set(accepted)];
+        }
+
+        function parseVocabData(jsonArray) {
+            vocabList = jsonArray.map(row => {
+                const getVal = (keywords) => {
+                    const key = Object.keys(row).find(k => keywords.some(kw => k.includes(kw)));
+                    return key ? String(row[key]).trim() : '';
+                };
+                
+                const rawWord = getVal(['英文', '單字', 'Word']);
+                
+                let regionInfo = '';
+                if (rawWord.match(/\((US)\)/i)) regionInfo = 'US (美式)';
+                else if (rawWord.match(/\((UK)\)/i)) regionInfo = 'UK (英式)';
+                
+                return {
+                    level: getVal(['級別', 'Level', '級']),
+                    word: rawWord, 
+                    pos: getVal(['詞性', 'PoS', 'pos']),
+                    meaning: getVal(['中文', '意思', 'Meaning']),
+                    acceptedAnswers: generateAcceptedAnswers(rawWord), 
+                    region: regionInfo 
+                };
+            }).filter(item => item.word && item.meaning);
+
+            if (vocabList.length === 0) {
+                ui.uploadError.innerText = "⚠️ 找不到單字資料！請確保欄位名稱包含：級別、英文單字、詞性、繁體中文意思。";
+                ui.uploadError.classList.remove('hidden');
+                return;
+            }
+
+            for (let i = vocabList.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [vocabList[i], vocabList[j]] = [vocabList[j], vocabList[i]];
+            }
+
+            userAnswers = new Array(vocabList.length).fill('');
+            currentIndex = 0;
+            
+            startGame();
+        }
+
+        // --- Game Logic ---
+        function startGame() {
+            screens.upload.classList.add('hidden');
+            screens.game.classList.remove('hidden');
+            screens.game.classList.add('flex');
+            
+            ui.qTotalNum.innerText = vocabList.length;
+            
+            buildGrid();
+            loadQuestion(0);
+            
+            if (speechSynth.getVoices().length === 0) {
+                speechSynth.onvoiceschanged = () => {};
+            }
+        }
+
+        function loadQuestion(index) {
+            if (index < 0 || index >= vocabList.length) return;
+            
+            currentIndex = index;
+            const currentItem = vocabList[currentIndex];
+            
+            ui.qNum.innerText = currentIndex + 1;
+            ui.qLevel.innerText = currentItem.level || 'Unknown';
+            ui.qPos.innerText = currentItem.pos ? `[ ${currentItem.pos} ]` : '';
+            
+            if (currentItem.region) {
+                ui.qRegion.innerText = `💡 提示：請輸入 ${currentItem.region} 拼寫`;
+                ui.qRegion.classList.remove('hidden');
+            } else {
+                ui.qRegion.classList.add('hidden');
+            }
+            
+            ui.qMeaning.innerText = currentItem.meaning;
+            ui.answerInput.value = userAnswers[currentIndex];
+            
+            ui.answerInput.focus();
+            
+            ui.btnPrev.disabled = currentIndex === 0;
+            ui.btnPrev.style.opacity = currentIndex === 0 ? '0.5' : '1';
+            ui.btnPrev.style.cursor = currentIndex === 0 ? 'not-allowed' : 'pointer';
+            
+            if (currentIndex === vocabList.length - 1) {
+                ui.btnNext.innerHTML = '<i class="fa-solid fa-check"></i> 寫完了';
+                ui.btnNext.classList.replace('bg-blue-500', 'bg-green-500');
+                ui.btnNext.classList.replace('hover:bg-blue-600', 'hover:bg-green-600');
+                ui.btnNext.classList.replace('border-blue-700', 'border-green-700');
+            } else {
+                ui.btnNext.innerHTML = '下一題 <i class="fa-solid fa-arrow-right"></i>';
+                ui.btnNext.classList.replace('bg-green-500', 'bg-blue-500');
+                ui.btnNext.classList.replace('hover:bg-green-600', 'hover:bg-blue-600');
+                ui.btnNext.classList.replace('border-green-700', 'border-blue-700');
+            }
+
+            document.querySelectorAll('.grid-btn').forEach((btn, i) => {
+                if (i === currentIndex) {
+                    btn.classList.add('ring-4', 'ring-blue-400', 'scale-110');
+                } else {
+                    btn.classList.remove('ring-4', 'ring-blue-400', 'scale-110');
+                }
+            });
+
+            speakWord(currentItem.word);
+        }
+
+        function changeQuestion(step) {
+            loadQuestion(currentIndex + step);
+        }
+
+        function speakWord(word) {
+            speechSynth.cancel();
+            
+            let cleanWord = word.split('/')[0].replace(/\((UK|US)\)/gi, '').replace(/[\(\)]/g, '').trim();
+
+            cleanWord = ". . . . " + cleanWord;
+
+            let utterance = new SpeechSynthesisUtterance(cleanWord);
+            utterance.lang = 'en-US';
+            
+            if (engVoice) {
+                utterance.voice = engVoice;
+            }
+            
+            utterance.rate = 0.5; 
+            utterance.pitch = 1.0; 
+            
+            window.speechUtterances.push(utterance);
+
+            utterance.onend = function() {
+                window.speechUtterances = window.speechUtterances.filter(u => u !== utterance);
+            };
+
+            if (speechSynth.resume) {
+                speechSynth.resume();
+            }
+            
+            setTimeout(() => {
+                speechSynth.speak(utterance);
+            }, 300);
+        }
+
+        // --- Grid Navigation ---
+        function buildGrid() {
+            ui.gridContainer.innerHTML = '';
+            for (let i = 0; i < vocabList.length; i++) {
+                const btn = document.createElement('button');
+                btn.className = `grid-btn w-10 h-10 rounded-xl font-bold text-sm flex items-center justify-center transition-all bg-gray-100 text-gray-500 hover:bg-gray-200 border-2 border-gray-200 shadow-sm`;
+                btn.innerText = i + 1;
+                btn.onclick = () => loadQuestion(i);
+                btn.id = `grid-btn-${i}`;
+                ui.gridContainer.appendChild(btn);
+            }
+        }
+
+        function updateGridItemColor(index) {
+            const btn = document.getElementById(`grid-btn-${index}`);
+            if (userAnswers[index].trim() !== '') {
+                btn.classList.remove('bg-gray-100', 'text-gray-500', 'border-gray-200');
+                btn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-300', 'shadow-md');
+            } else {
+                btn.classList.add('bg-gray-100', 'text-gray-500', 'border-gray-200');
+                btn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-300', 'shadow-md');
+            }
+        }
+
+        function checkCompleteness() {
+            const isComplete = userAnswers.every(ans => ans.trim() !== '');
+            if (isComplete) {
+                ui.btnSubmit.disabled = false;
+                ui.btnSubmit.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                ui.btnSubmit.classList.add('bg-gradient-to-r', 'from-green-400', 'to-emerald-500', 'text-white', 'hover:from-green-500', 'hover:to-emerald-600', 'border-b-4', 'border-green-700', 'bounce-hover', 'shadow-lg');
+                ui.submitWarning.innerText = "✨ 全部作答完畢！可以交卷囉！";
+                ui.submitWarning.classList.replace('text-orange-500', 'text-green-600');
+            } else {
+                ui.btnSubmit.disabled = true;
+                ui.btnSubmit.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                ui.btnSubmit.classList.remove('bg-gradient-to-r', 'from-green-400', 'to-emerald-500', 'text-white', 'hover:from-green-500', 'hover:to-emerald-600', 'border-b-4', 'border-green-700', 'bounce-hover', 'shadow-lg');
+                const remaining = userAnswers.filter(ans => ans.trim() === '').length;
+                ui.submitWarning.innerText = `還有 ${remaining} 題沒寫完，請繼續加油喔！`;
+                ui.submitWarning.classList.replace('text-green-600', 'text-orange-500');
+            }
+        }
+
+        // --- Evaluation, Results & Export ---
+        function calculateResult() {
+            let score = 0;
+            let mistakesHtml = '';
+            mistakeRecords = []; // 重置錯題紀錄
+
+            for (let i = 0; i < vocabList.length; i++) {
+                const userAns = userAnswers[i].trim().toLowerCase().replace(/\s+/g, ' ');
+
+                if (vocabList[i].acceptedAnswers.includes(userAns)) {
+                    score++;
+                } else {
+                    // 記錄到匯出的陣列中
+                    mistakeRecords.push({
+                        qNum: i + 1,
+                        meaning: vocabList[i].meaning,
+                        correctWord: vocabList[i].word,
+                        userAnswer: userAnswers[i] || '(未作答)'
+                    });
+
+                    // 產生畫面上的 HTML
+                    mistakesHtml += `
+                        <div class="bg-red-50 p-4 rounded-2xl border-2 border-red-200 flex flex-col">
+                            <div class="text-sm text-gray-500 mb-1">Q${i+1}. ${vocabList[i].meaning}</div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-red-500 font-bold line-through flex-1">${userAnswers[i] || '(未作答)'}</span>
+                                <i class="fa-solid fa-arrow-right text-gray-400"></i>
+                                <span class="text-green-600 font-black text-lg flex-1 text-right">${vocabList[i].word}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            finalCalculatedScore = Math.round((score / vocabList.length) * 100);
+            
+            screens.game.classList.remove('flex');
+            screens.game.classList.add('hidden');
+            screens.result.classList.remove('hidden');
+            screens.result.classList.add('flex');
+
+            ui.scoreText.innerText = finalCalculatedScore;
+            
+            if (finalCalculatedScore === 100) {
+                ui.scoreText.className = "text-green-500";
+                ui.scoreComment.innerText = "太完美了！你是名副其實的單字大師！ 🏆";
+                ui.mistakesContainer.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8 font-bold">沒有任何錯題，太厲害啦！✨</div>';
+            } else if (finalCalculatedScore >= 80) {
+                ui.scoreText.className = "text-blue-500";
+                ui.scoreComment.innerText = "非常棒喔！再稍微檢查一下就滿分了！ 🌟";
+                ui.mistakesContainer.innerHTML = mistakesHtml;
+            } else if (finalCalculatedScore >= 60) {
+                ui.scoreText.className = "text-yellow-500";
+                ui.scoreComment.innerText = "做得很不錯！把錯的單字記下來會更強喔！ 💪";
+                ui.mistakesContainer.innerHTML = mistakesHtml;
+            } else {
+                ui.scoreText.className = "text-red-500";
+                ui.scoreComment.innerText = "沒關係，多練習幾次一定會進步的！加油！ 🐢";
+                ui.mistakesContainer.innerHTML = mistakesHtml;
+            }
+        }
+
+        // 匯出 Excel 錯題紀錄功能
+        function exportRecordToExcel() {
+            // 取得當前日期與時間
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            // 建立 Excel 工作表的資料結構 (二維陣列)
+            let wsData = [
+                ["測驗紀錄單"],
+                ["測驗題庫", currentFileName], // 新增：顯示這份測驗來自哪個檔案
+                ["測驗日期", `${dateStr} ${timeStr}`],
+                ["測驗分數", `${finalCalculatedScore} / 100`],
+                [], // 空一行分隔
+                ["題號", "中文意思", "正確拼法", "孩子寫的答案"] // 標題列
+            ];
+
+            // 填入錯題資料
+            if (mistakeRecords.length === 0) {
+                wsData.push(["-", "🎉 太厲害了！這次測驗 100 分，沒有任何錯題！", "-", "-"]);
+            } else {
+                mistakeRecords.forEach(m => {
+                    wsData.push([m.qNum, m.meaning, m.correctWord, m.userAnswer]);
+                });
+            }
+
+            // 將陣列轉換為 SheetJS 工作表物件
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // 設定每個欄位的寬度使其美觀
+            ws['!cols'] = [
+                {wch: 8},   // 題號
+                {wch: 30},  // 中文意思
+                {wch: 25},  // 正確拼法
+                {wch: 25}   // 孩子答案
+            ];
+
+            // 建立活頁簿並加入工作表
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "測驗紀錄");
+
+            // 執行下載 (檔名包含原始題庫名、日期與分數)
+            const baseName = currentFileName.replace(/\.[^/.]+$/, ""); // 去除原始檔案的副檔名(.xlsx)
+            const exportFileName = `測驗紀錄_${baseName}_${dateStr}_${finalCalculatedScore}分.xlsx`;
+            XLSX.writeFile(wb, exportFileName);
+        }
+
+        // Initialize App on load
+        window.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>

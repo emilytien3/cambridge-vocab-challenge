@@ -87,18 +87,18 @@
             <div class="flex flex-col md:flex-row w-full max-w-xl gap-3">
                 <select id="preset-selector" class="flex-1 p-4 border-4 border-indigo-100 rounded-2xl font-bold text-gray-700 text-lg focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all shadow-inner cursor-pointer">
                     <option value="">-- 請選擇要挑戰的題庫 --</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表1-50.xlsx">📘 01：第 1 - 50 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表51-100.xlsx">📘 02：第 51 - 100 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表101-150.xlsx">📘 03：第 101 - 150 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表151-200.xlsx">📘 04：第 151 - 200 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表201-250.xlsx">📘 05：第 201 - 250 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表251-300.xlsx">📘 06：第 251 - 300 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表301-350.xlsx">📘 07：第 301 - 350 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表351-400.xlsx">📘 08：第 351 - 400 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表401-450.xlsx">📘 09：第 401 - 450 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表451-500.xlsx">📘 10：第 451 - 500 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表501-550.xlsx">📘 11：第 501 - 550 題</option>
-                    <option value="劍橋兒童英語Starters與Movers詞彙表551-573.xlsx">📘 12：第 551 - 573 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表1-50.xlsx">📗 01：第 1 - 50 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表51-100.xlsx">📗 02：第 51 - 100 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表101-150.xlsx">📗 03：第 101 - 150 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表151-200.xlsx">📗 04：第 151 - 200 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表201-250.xlsx">📗 05：第 201 - 250 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表251-300.xlsx">📗 06：第 251 - 300 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表301-350.xlsx">📗 07：第 301 - 350 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表351-400.xlsx">📗 08：第 351 - 400 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表401-450.xlsx">📗 09：第 401 - 450 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表451-500.xlsx">📗 10：第 451 - 500 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表501-550.xlsx">📗 11：第 501 - 550 題</option>
+                    <option value="劍橋兒童英語Starters與Movers詞彙表551-573.xlsx">📗 12：第 551 - 573 題</option>
                 </select>
                 <button id="btn-load-preset" class="bg-indigo-500 hover:bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xl transition-all shadow-md border-b-4 border-indigo-700 bounce-hover whitespace-nowrap flex items-center justify-center gap-2">
                     出發！🚀
@@ -527,6 +527,8 @@
             
             let cleanWord = word.split('/')[0].replace(/\((UK|US)\)/gi, '').replace(/[\(\)]/g, '').trim();
 
+            // 【防吃音終極密技 2.0 (加長跑道法)】：暫時註解掉，因為使用電腦內建音響不需要緩衝時間。
+            // 若未來使用藍牙耳機而有「吃音」狀況時，可將下方這行解除註解。
             // cleanWord = ". . . . " + cleanWord;
 
             let utterance = new SpeechSynthesisUtterance(cleanWord);
@@ -598,11 +600,9 @@
 
         // --- 智能例句生成引擎 (根據詞性與中文意思自動生成) ---
         function generateSimpleSentence(rawWord, pos, meaning) {
-            // 清理單字字串 (例如將 "television / TV" 變成 "television")
             let cleanWord = rawWord.split('/')[0].replace(/\((UK|US)\)/gi, '').replace(/[\(\)]/g, '').trim().toLowerCase();
             let p = (pos || '').toLowerCase();
             
-            // 提取主要中文意思 (遇到 "水 / 澆水" 取 "水")
             let primaryMeaning = (meaning || '').split('/')[0].trim();
             
             if (p.includes('n.')) {
@@ -633,9 +633,11 @@
                 if (currentData.acceptedAnswers.includes(userAns)) {
                     score++;
                 } else {
-                    // 記錄至匯出陣列
+                    // 記錄至匯出陣列 (新增 level 與 pos 欄位)
                     mistakeRecords.push({
                         qNum: i + 1,
+                        level: currentData.level,     // 新增：記錄級別
+                        pos: currentData.pos,         // 新增：記錄詞性
                         meaning: currentData.meaning,
                         correctWord: currentData.word,
                         userAnswer: userAnswers[i] || '(未作答)'
@@ -749,24 +751,28 @@
                 ["測驗日期", `${dateStr} ${timeStr}`],
                 ["測驗分數", `${finalCalculatedScore} / 100`],
                 [], 
-                ["題號", "中文意思", "正確拼法", "孩子寫的答案"] 
+                ["題號", "級別", "詞性", "中文意思", "正確拼法", "孩子寫的答案"] // 更新：加入級別與詞性標題
             ];
 
             if (mistakeRecords.length === 0) {
-                wsData.push(["-", "🎉 太厲害了！這次測驗 100 分，沒有任何錯題！", "-", "-"]);
+                wsData.push(["-", "-", "-", "🎉 太厲害了！這次測驗 100 分，沒有任何錯題！", "-", "-"]); // 更新：配合欄位數補齊橫線
             } else {
                 mistakeRecords.forEach(m => {
-                    wsData.push([m.qNum, m.meaning, m.correctWord, m.userAnswer]);
+                    // 更新：將級別與詞性資料推入陣列
+                    wsData.push([m.qNum, m.level, m.pos, m.meaning, m.correctWord, m.userAnswer]);
                 });
             }
 
             const ws = XLSX.utils.aoa_to_sheet(wsData);
             
+            // 更新：重新設定每個欄位的寬度使其美觀
             ws['!cols'] = [
-                {wch: 8},   
-                {wch: 30},  
-                {wch: 25},  
-                {wch: 25}   
+                {wch: 8},   // 題號
+                {wch: 15},  // 級別
+                {wch: 15},  // 詞性
+                {wch: 30},  // 中文意思
+                {wch: 25},  // 正確拼法
+                {wch: 25}   // 孩子答案
             ];
 
             const wb = XLSX.utils.book_new();

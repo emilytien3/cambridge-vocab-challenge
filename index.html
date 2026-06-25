@@ -598,28 +598,6 @@
             }
         }
 
-        // --- 智能例句生成引擎 (根據詞性與中文意思自動生成) ---
-        function generateSimpleSentence(rawWord, pos, meaning) {
-            let cleanWord = rawWord.split('/')[0].replace(/\((UK|US)\)/gi, '').replace(/[\(\)]/g, '').trim().toLowerCase();
-            let p = (pos || '').toLowerCase();
-            
-            let primaryMeaning = (meaning || '').split('/')[0].trim();
-            
-            if (p.includes('n.')) {
-                return `Look! I see the <b>${cleanWord}</b>. 👀 <br><span class="text-xs text-gray-500 font-normal">(看！我看到了${primaryMeaning}。)</span>`;
-            } else if (p.includes('v.')) {
-                return `Let's <b>${cleanWord}</b> together! 🏃‍♂️ <br><span class="text-xs text-gray-500 font-normal">(我們一起來${primaryMeaning}吧！)</span>`;
-            } else if (p.includes('adj.')) {
-                return `Wow, it is very <b>${cleanWord}</b>! ✨ <br><span class="text-xs text-gray-500 font-normal">(哇，這非常${primaryMeaning}喔！)</span>`;
-            } else if (p.includes('adv.')) {
-                return `We do it <b>${cleanWord}</b>. 💨 <br><span class="text-xs text-gray-500 font-normal">(我們${primaryMeaning}地做這件事。)</span>`;
-            } else if (p.includes('prep.')) {
-                return `The toy is <b>${cleanWord}</b> the table. 🧸 <br><span class="text-xs text-gray-500 font-normal">(玩具在桌子${primaryMeaning}。)</span>`;
-            } else {
-                return `I know the word "<b>${cleanWord}</b>"! 🌟 <br><span class="text-xs text-gray-500 font-normal">(我學會「${primaryMeaning}」這個字了！)</span>`;
-            }
-        }
-
         // --- Evaluation, Results & Export ---
         function calculateResult() {
             let score = 0;
@@ -633,11 +611,11 @@
                 if (currentData.acceptedAnswers.includes(userAns)) {
                     score++;
                 } else {
-                    // 記錄至匯出陣列 (新增 level 與 pos 欄位)
+                    // 記錄至匯出陣列
                     mistakeRecords.push({
                         qNum: i + 1,
-                        level: currentData.level,     // 新增：記錄級別
-                        pos: currentData.pos,         // 新增：記錄詞性
+                        level: currentData.level,     
+                        pos: currentData.pos,         
                         meaning: currentData.meaning,
                         correctWord: currentData.word,
                         userAnswer: userAnswers[i] || '(未作答)'
@@ -655,14 +633,11 @@
                     } else if (currentData.word.includes('/')) {
                         regionTag = `<span class="text-xs bg-teal-100 text-teal-700 px-2 py-1 rounded-full font-bold shadow-sm border border-teal-200 flex items-center gap-1"><i class="fa-solid fa-code-branch"></i> 多重拼寫</span>`;
                     }
-
-                    // 3. 呼叫智慧例句生成器
-                    let exampleSentence = generateSimpleSentence(currentData.word, currentData.pos, currentData.meaning);
                     
                     // 將單字中的單引號逸出，避免破壞 onclick 語法
                     let safeWord = currentData.word.replace(/'/g, "\\'");
 
-                    // 產生豐富版畫面的 HTML
+                    // 產生豐富版畫面的 HTML (移除小例句區塊)
                     mistakesHtml += `
                         <div class="bg-red-50 p-5 rounded-3xl border-2 border-red-200 flex flex-col gap-3 relative shadow-sm hover:shadow-md transition-shadow">
                             
@@ -695,15 +670,6 @@
                                 <div class="flex-1 text-center">
                                     <div class="text-xs text-green-500 mb-1 font-black">正確拼法</div>
                                     <span class="text-green-600 font-black text-2xl tracking-wide">${currentData.word}</span>
-                                </div>
-                            </div>
-
-                            <!-- 生活小例句 -->
-                            <div class="mt-1 bg-blue-50/80 text-blue-800 p-4 rounded-2xl border border-blue-100 text-sm font-bold flex items-start gap-3">
-                                <i class="fa-solid fa-lightbulb text-yellow-500 text-lg mt-0.5"></i>
-                                <div class="leading-relaxed">
-                                    <div class="text-blue-400 text-xs mb-1 font-black uppercase tracking-wider">學習小例句</div>
-                                    ${exampleSentence}
                                 </div>
                             </div>
                         </div>
